@@ -2,47 +2,29 @@ package main
 
 import (
 	"log"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"delivery/config"
 	"delivery/database/postgres"
-	"delivery/models"
+	"delivery/routes"
 )
 
 func main() {
-	// Загружаем конфигурацию
+	r := gin.Default()
 	cfg := config.LoadConfig()
 
-	// Подключаемся к базе данных
+
 	err := postgres.InitDB(cfg)
 	if err != nil {
 		log.Fatalf("Could not initialize database: %v", err)
 	}
-	defer postgres.DB.Close() // Закрываем соединение с базой при завершении программы
+	defer postgres.DB.Close()
 
-	// Создаем сервер Gin
-	r := gin.Default()
+	r.LoadHTMLGlob("templates/*.html")
 
-	// Регистрируем маршрут
-	r.GET("/ping", func(c *gin.Context) {
-		// Получаем список продуктов из базы данных
-		products := models.GetAllProducts()
 
-		// Отправляем ответ в формате JSON
-		c.JSON(http.StatusOK, gin.H{
-			"message":  "pong",
-			"products": products,
-		})
-	})
+	routes.InitializeRoutes(r)
 
-	// Получаем порт из конфигурации
-	port := cfg.ServerPort
-	if port == "" {
-		port = "4040" // Значение по умолчанию
-	}
 
-	// Запускаем сервер
-	log.Printf("Starting server on port %s", port)
-	r.Run(":" + port)
+	r.Run(":4040")
 }

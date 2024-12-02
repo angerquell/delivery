@@ -3,6 +3,8 @@ package models
 import (
 	"log"
 	"delivery/database/postgres"
+	"strconv"
+	"fmt"
 )
 
 
@@ -16,7 +18,6 @@ type Item struct {
 func GetAllProducts() []Item {
 
 	var items []Item
-
 
 	rows, err := postgres.DB.Query("SELECT id, model, price, company FROM products")
 	if err != nil {
@@ -41,4 +42,19 @@ func GetAllProducts() []Item {
 	}
 
 	return items
+}
+
+func AddProduct(model string, company string, price string) error {
+    priceInt, err := strconv.Atoi(price)
+    if err != nil {
+        return fmt.Errorf("invalid price: %v", err)
+    }
+
+    query := "INSERT INTO products (model, company, price) VALUES ($1, $2, $3)"
+    _, err = postgres.DB.Exec(query, model, company, priceInt)
+    if err != nil {
+        return fmt.Errorf("failed to insert product: %v", err)
+    }
+
+    return nil
 }
